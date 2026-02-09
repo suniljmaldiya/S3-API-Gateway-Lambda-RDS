@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - My App</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+    /* Dashboard Styles */
+.dashboard-container {
+    min-height: 100vh;
+    background: #f5f6fa;
+}
+
+.dashboard-header {
+    background: white;
+    padding: 20px 40px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-header h1 {
+    color: #333;
+    font-size: 24px;
+}
+
+.logout-btn {
+    width: auto;
+    padding: 10px 20px;
+    background: #e74c3c;
+    font-size: 14px;
+}
+
+.logout-btn:hover {
+    background: #c0392b;
+}
+
+.dashboard-content {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.welcome-section {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-section h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card h3 {
+    color: #666;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.recent-activity {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.recent-activity h3 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.recent-activity ul {
+    list-style: none;
+}
+
+.recent-activity li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    color: #666;
+}
+
+.recent-activity li:last-child {
+    border-bottom: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .dashboard-content {
+        padding: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+    </style>
+
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Welcome to Dashboard</h1>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </header>
+        
+        <main class="dashboard-content">
+            <div class="welcome-section">
+                <h2 id="welcomeMessage">Welcome back!</h2>
+                <p>You have successfully logged in to your dashboard.</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Users</h3>
+                    <p class="stat-number">1,234</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Sessions</h3>
+                    <p class="stat-number">56</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Revenue</h3>
+                    <p class="stat-number">$12,345</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Growth</h3>
+                    <p class="stat-number">+15%</p>
+                </div>
+            </div>
+            
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <ul>
+                    <li>User John Doe logged in - 2 minutes ago</li>
+                    <li>New order received - 5 minutes ago</li>
+                    <li>System backup completed - 1 hour ago</li>
+                    <li>Database updated - 2 hours ago</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+    <script>
+const API_BASE_URL = 'https://8wnjxt1fx1.execute-api.us-east-1.amazonaws.com/dev';
+
+document.addEventListener('DOMContentLoaded', function () {
+    const authToken = localStorage.getItem('authToken');
+
+    // ✅ SIMPLE frontend guard (NO backend call here)
+    if (!authToken) {
+        window.location.replace('index.html');
+        return;
+    }
+
+    // Show username
+    const username = localStorage.getItem('username');
+    if (username) {
+        document.getElementById('welcomeMessage').textContent =
+            `Welcome back, ${username}!`;
+    }
+
+    // Load protected data (backend validates token here)
+    loadDashboardData();
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.replace('index.html');
+    });
+});
+
+async function loadDashboardData() {
+    const authToken = localStorage.getItem('authToken');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/dashboard`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            // Token invalid → logout
+            localStorage.clear();
+            window.location.replace('index.html');
+            return;
+        }
+
+        const data = await response.json();
+        updateDashboardStats(data);
+
+    } catch (err) {
+        console.error('Dashboard load failed', err);
+    }
+}
+
+function updateDashboardStats(data) {
+    if (!data || !data.stats) return;
+
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers[0].textContent = data.stats.totalUsers ?? '1,234';
+    statNumbers[1].textContent = data.stats.activeSessions ?? '56';
+    statNumbers[2].textContent = `$${data.stats.revenue ?? '12,345'}`;
+    statNumbers[3].textContent = `+${data.stats.growth ?? '15'}%`;
+}
+</script>
+
+</body>
+</html>

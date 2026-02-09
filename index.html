@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - My App</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+/* Login Page Styles */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-form {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+    font-size: 28px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+.error-message {
+    color: #e74c3c;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.demo-credentials {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #666;
+}
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" id="loginBtn">Login</button>
+                <div id="error-message" class="error-message"></div>
+                <div id="loading" class="loading" style="display: none;">Authenticating...</div>
+            </form>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        // Configuration - Replace with your actual API Gateway URL
+const API_BASE_URL = 'https://8wnjxt1fx1.execute-api.us-east-1.amazonaws.com/dev';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is already logged in
+    if (localStorage.getItem('authToken')) {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+
+    const loginForm = document.getElementById('loginForm');
+    const errorMessage = document.getElementById('error-message');
+    const loadingDiv = document.getElementById('loading');
+    const loginBtn = document.getElementById('loginBtn');
+
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        // Clear previous messages
+        errorMessage.textContent = '';
+        loadingDiv.style.display = 'block';
+        loginBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Store authentication token
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('username', username);
+                
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+            } else {
+                errorMessage.textContent = data.message || 'Invalid credentials. Please try again.';
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            errorMessage.textContent = 'Network error. Please try again.';
+        } finally {
+            loadingDiv.style.display = 'none';
+            loginBtn.disabled = false;
+        }
+    });
+});
+
+    </script>
+</body>
+</html>
